@@ -1,21 +1,22 @@
 {
   "name": "liquidx-mlphotobooth",
-  "version": "1.0.20210612",
+  "version": "1.0.20210613",
   "scripts": {
     "build": "npx webpack --config webpack.js --progress",
     "watch": "npx webpack --watch --config webpack.js  --progress",
     "serve": "npx http-server ./public -p 8300"
   },
   "dependencies": {
-    "@babel/core": "^7.11.6",
-    "@google-cloud/storage": "^5.3.0",
+    "@babel/core": "^7.14.5",
+    "@google-cloud/storage": "^5.8.5",
     "@tensorflow-models/face-landmarks-detection": "^0.0.3",
-    "@tensorflow-models/mobilenet": "^2.0.4",
-    "@tensorflow/tfjs": "^2.4.0",
+    "@tensorflow-models/mobilenet": "^2.1.0",
+    "@tensorflow/tfjs": "^3.7.0",
     "@tensorflow/tfjs-backend-webgl": "^3.7.0",
+    "@tensorflow/tfjs-core": "^3.7.0",
     "dat.gui": "^0.7.7",
-    "delaunator": "^4.0.1",
-    "liquidx-base": "git://github.com/liquidx/liquidx-base.git",
+    "delaunator": "^5.0.0",
+    "liquidx-base": "github:liquidx/liquidx-base",
     "stats.js": "^0.17.0",
     "three": "^0.129.0"
   },
