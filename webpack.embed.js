@@ -20,9 +20,16 @@ const webpackConfig = (srcPath, templatePath, htmlOutputPath) => {
     }),
   ]
 
+  const resolve = {
+    alias: {
+      threeExamples: path.resolve(__dirname, 'node_modules/three/examples/jsm/'),
+    }
+  }
+
   return {
     entry,
-    plugins
+    plugins,
+    resolve
   }
 }
 

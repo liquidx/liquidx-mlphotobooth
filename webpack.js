@@ -22,7 +22,6 @@ module.exports = merge.merge(
     },
     resolve: {
       alias: {
-        threeExamples: path.resolve(__dirname, 'node_modules/three/examples/jsm/'),
         liquidxBase: path.resolve(__dirname, 'node_modules/liquidx-base/')
       },
     },
