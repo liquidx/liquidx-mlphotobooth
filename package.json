@@ -1,6 +1,6 @@
 {
   "name": "liquidx-mlphotobooth",
-  "version": "1.0.20210613",
+  "version": "1.0.20210614",
   "scripts": {
     "build": "npx webpack --config webpack.js --progress",
     "watch": "npx webpack --watch --config webpack.js  --progress",
@@ -13,6 +13,7 @@
     "@tensorflow-models/mobilenet": "^2.1.0",
     "@tensorflow/tfjs": "^3.7.0",
     "@tensorflow/tfjs-backend-webgl": "^3.7.0",
+    "@tensorflow/tfjs-converter": "^3.7.0",
     "@tensorflow/tfjs-core": "^3.7.0",
     "dat.gui": "^0.7.7",
     "delaunator": "^5.0.0",

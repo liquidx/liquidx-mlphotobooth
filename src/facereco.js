@@ -1,6 +1,6 @@
 import * as faceLandmarksDetection from "@tensorflow-models/face-landmarks-detection";
 import * as uvcoords from "@tensorflow-models/face-landmarks-detection/dist/mediapipe-facemesh/uv_coords";
-import * as tf from "@tensorflow/tfjs-core";
+import * as tf from "@tensorflow/tfjs";
 import "@tensorflow/tfjs-backend-webgl";
 
 export class FaceReco {
