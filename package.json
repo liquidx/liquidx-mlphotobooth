@@ -15,7 +15,7 @@
     "@tensorflow/tfjs-backend-webgl": "^3.7.0",
     "dat.gui": "^0.7.7",
     "delaunator": "^4.0.1",
-    "liquidx-base": "file:../liquidx-base",
+    "liquidx-base": "git://github.com/liquidx/liquidx-base.git",
     "stats.js": "^0.17.0",
     "three": "^0.129.0"
   },
