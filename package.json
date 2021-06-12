@@ -1,6 +1,6 @@
 {
-  "name": "mlphotobooth",
-  "version": "1.0.202009025",
+  "name": "liquidx-mlphotobooth",
+  "version": "1.0.20210612",
   "scripts": {
     "build": "npx webpack --config webpack.js --progress",
     "watch": "npx webpack --watch --config webpack.js  --progress",
