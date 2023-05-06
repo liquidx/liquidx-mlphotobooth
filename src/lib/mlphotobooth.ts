@@ -8,7 +8,7 @@ let _faceViewer: null | FaceView = null
 let _faceReco: null | FaceReco = null
 
 const _faceViewerOptions = {
-  onlyShowHalfFace: false, // Draw only half the face.
+  onlyShowHalfFace: true, // Draw only half the face.
 }
 
 let _sourcesElement: null | HTMLSelectElement = null;
