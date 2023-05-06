@@ -62,11 +62,19 @@ export class FaceReco {
     const stream = await navigator.mediaDevices.getUserMedia(cameraOptions);
     video.srcObject = stream;
 
+    // Get deviceId that we're using
+    const videoTracks = stream.getVideoTracks();
+    let selectedDeviceId = ''
+    if (videoTracks && videoTracks.length > 0) {
+      const videoTrack = videoTracks[0];
+      const videoSettings = videoTrack.getSettings();
+      selectedDeviceId = videoSettings.deviceId;
+    }
+
     return new Promise((resolve) => {
       video.onloadedmetadata = () => {
-        console.log(`loaded: ${deviceId}`);
         this.videoLoaded = true;
-        resolve(video);
+        resolve({ video, deviceId: selectedDeviceId });
       };
     });
   }
@@ -101,13 +109,13 @@ export class FaceReco {
       this.videoCameraElement,
       this.videoSize,
       deviceId
-    ).then((video) => {
+    ).then(({ video, deviceId }) => {
       video.play();
       let videoWidth = video.videoWidth;
       let videoHeight = video.videoHeight;
       video.width = videoWidth;
       video.height = videoHeight;
-      return video;
+      return { video, deviceId };
     });
   }
 
