@@ -41,7 +41,7 @@ const setLoading = (isLoading) => {
 };
 const populateSourceSelector = (sources) => {
     return navigator.mediaDevices.enumerateDevices().then((devices) => {
-        console.log('populateSourceSelector', devices);
+        //console.log('populateSourceSelector', devices)
         if (sources) {
             while (sources.firstChild) {
                 sources.removeChild(sources.firstChild);
@@ -74,7 +74,7 @@ const restartRecognition = (faceReco, faceViewer) => {
             setLoading(false);
             if (!firstPredictions) {
                 firstPredictions = predictions;
-                console.log(firstPredictions);
+                console.log('Prediction:', firstPredictions);
             }
             if (faceViewer) {
                 faceViewer.updateFaceWithPredictions(predictions);
@@ -103,8 +103,11 @@ export const onStartRecognition = async () => {
     if (_faceReco && _faceViewer) {
         _faceReco.setup();
         faceViewerInit(_sceneElement, _faceViewerOptions);
-        _faceReco.startVideo(_currentVideoDevice).then((deviceId) => {
-            _currentVideoDevice = deviceId;
+        _faceReco.startVideo(_currentVideoDevice).then(({ video, deviceId }) => {
+            //console.log({ video, deviceId })
+            if (deviceId) {
+                _currentVideoDevice = video.deviceId;
+            }
             populateSourceSelector(_sourcesElement);
             restartRecognition(_faceReco, _faceViewer);
         });

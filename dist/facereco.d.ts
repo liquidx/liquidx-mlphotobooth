@@ -15,6 +15,9 @@ export class FaceReco {
     predictionCallback: any;
     stop(): void;
     stopVideo(): void;
-    startVideo(deviceId: any): Promise<any>;
+    startVideo(deviceId: any): Promise<{
+        video: any;
+        deviceId: any;
+    }>;
     renderPrediction(): Promise<void>;
 }
