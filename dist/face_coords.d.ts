@@ -1,0 +1,1 @@
+export const MEDIAPIPE_FACE_MESH_CONNECTED_KEYPOINTS_PAIRS: number[][];
