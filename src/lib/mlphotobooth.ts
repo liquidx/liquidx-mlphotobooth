@@ -7,11 +7,15 @@ let _currentVideoDevice: string = '';
 let _faceViewer: null | FaceView = null
 let _faceReco: null | FaceReco = null
 
+const _faceViewerOptions = {
+  onlyShowHalfFace: false, // Draw only half the face.
+}
+
 let _sourcesElement: null | HTMLSelectElement = null;
 let _loaderElement: null | HTMLDivElement = null;
 let _sceneElement: null | HTMLCanvasElement = null;
 
-const faceViewerInit = (sceneElement: null | HTMLCanvasElement) => {
+const faceViewerInit = (sceneElement: null | HTMLCanvasElement, options: any) => {
   if (!_faceViewer) {
     // _stats.showPanel(0)
     // document.body.appendChild( _stats.dom );
@@ -19,7 +23,7 @@ const faceViewerInit = (sceneElement: null | HTMLCanvasElement) => {
     if (document.body.clientWidth < size.width) {
       size.width = document.body.clientWidth - 40;
     }
-    _faceViewer = new FaceView(sceneElement, size.width, size.height)
+    _faceViewer = new FaceView(sceneElement, size.width, size.height, options)
     _faceViewer.animate()
   }
   return _faceViewer;
@@ -140,7 +144,7 @@ export const initPhotoBooth = (elements: {
   _sourcesElement = elements.sourcesElement
   _sceneElement = elements.sceneElement
   if (elements.videoElement && elements.previewElement) {
-    const faceViewer = faceViewerInit(_sceneElement)
+    const faceViewer = faceViewerInit(_sceneElement, _faceViewerOptions)
     faceRecoInit(elements.videoElement, elements.previewElement)
     populateSourceSelector(_sourcesElement)
     if (facesAlastair && facesAlastair.length > 0) {

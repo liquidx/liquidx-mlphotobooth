@@ -9,7 +9,7 @@ import { FACEMESH_TESSELATION } from '@mediapipe/face_mesh';
 export const NUM_KEYPOINTS = 468;
 
 export class FaceView {
-  constructor(scene, width, height, datgui, stats) {
+  constructor(scene, width, height, options) {
     this.cameraX = -150
     this.cameraY = -15
     this.cameraZ = 270
@@ -24,13 +24,14 @@ export class FaceView {
 
     this.width = width
     this.height = height
+    this.options = options
 
     this.wireframe = false
     this.showPoints = false
     this.showAxes = false
     this.showNormal = false
 
-    this.meshIndex = this.computeMeshIndexFromFaceMesh()
+    this.meshIndex = this.computeMeshIndexFromFaceMesh(options.onlyShowHalfFace)
 
     this.cachedPredictions = null
     this.debugElement = document.querySelector('#debugConsole')
@@ -60,23 +61,23 @@ export class FaceView {
       wireframeLinewidth: 6
     })
 
-    if (datgui) {
-      datgui.add(this, 'wireframe').onFinishChange(this.updateScene.bind(this))
-      datgui.add(this, 'showPoints').onFinishChange(this.updateScene.bind(this))
-      datgui.add(this, 'showNormal').onFinishChange(this.updateScene.bind(this))
-      datgui.add(this, 'showAxes').onFinishChange(this.updateAxes.bind(this))
-      datgui.add(this, 'applyScaling')
-      datgui.add(this, 'targetFaceHeight', 10, 500, 10)
-      let cameraControls = datgui.addFolder('Camera')
-      cameraControls.add(this, 'cameraX', -300, 300, 1).onChange(this.cameraControlsDidUpdate.bind(this))
-      cameraControls.add(this, 'cameraY', -300, 300, 1).onChange(this.cameraControlsDidUpdate.bind(this))
-      cameraControls.add(this, 'cameraZ', -300, 300, 1).onChange(this.cameraControlsDidUpdate.bind(this))
-      cameraControls.add(this, 'cameraAngleX', -3, 3, 0.01).onChange(this.cameraControlsDidUpdate.bind(this))
-      cameraControls.add(this, 'cameraAngleY', -3, 3, 0.01).onChange(this.cameraControlsDidUpdate.bind(this))
-      cameraControls.add(this, 'cameraAngleZ', -3, 3, 0.01).onChange(this.cameraControlsDidUpdate.bind(this))
-    }
-
-    this.stats = stats
+    // TODO: Temporarily removed datgui from the dependencies because
+    //       it didn't work with the bundler.
+    // if (datgui) {
+    //   datgui.add(this, 'wireframe').onFinishChange(this.updateScene.bind(this))
+    //   datgui.add(this, 'showPoints').onFinishChange(this.updateScene.bind(this))
+    //   datgui.add(this, 'showNormal').onFinishChange(this.updateScene.bind(this))
+    //   datgui.add(this, 'showAxes').onFinishChange(this.updateAxes.bind(this))
+    //   datgui.add(this, 'applyScaling')
+    //   datgui.add(this, 'targetFaceHeight', 10, 500, 10)
+    //   let cameraControls = datgui.addFolder('Camera')
+    //   cameraControls.add(this, 'cameraX', -300, 300, 1).onChange(this.cameraControlsDidUpdate.bind(this))
+    //   cameraControls.add(this, 'cameraY', -300, 300, 1).onChange(this.cameraControlsDidUpdate.bind(this))
+    //   cameraControls.add(this, 'cameraZ', -300, 300, 1).onChange(this.cameraControlsDidUpdate.bind(this))
+    //   cameraControls.add(this, 'cameraAngleX', -3, 3, 0.01).onChange(this.cameraControlsDidUpdate.bind(this))
+    //   cameraControls.add(this, 'cameraAngleY', -3, 3, 0.01).onChange(this.cameraControlsDidUpdate.bind(this))
+    //   cameraControls.add(this, 'cameraAngleZ', -3, 3, 0.01).onChange(this.cameraControlsDidUpdate.bind(this))
+    // }
 
     this.updateAxes()
 
@@ -152,7 +153,7 @@ export class FaceView {
     }
   }
 
-  computeMeshIndexFromFaceMesh() {
+  computeMeshIndexFromFaceMesh(onlyShowHalfFace) {
     // Each of the FACEMESH_TESSELATION format is the edge of the triangle
     // defined by which position in the facemesh that is returned. 
     // [1, 2] means the edge is using the second and third position in the returned array.
@@ -162,6 +163,9 @@ export class FaceView {
     // to build the geometry index.
 
     let triangles = FACEMESH_TESSELATION.map(v => v[0])
+    if (onlyShowHalfFace) {
+      triangles = triangles.slice(0, triangles.length / 2)
+    }
     return triangles
   }
 
@@ -313,9 +317,6 @@ export class FaceView {
   }
 
   renderOnce() {
-    if (this.stats) {
-      this.stats.begin()
-    }
     if (this.didCanvasResize(this.renderer)) {
       const canvas = this.renderer.domElement;
       this.width = canvas.clientWidth
@@ -329,9 +330,6 @@ export class FaceView {
       let data = this.canvas.toDataURL('image/png', 1)
       this.shouldCapture(data)
       this.shouldCapture = null
-    }
-    if (this.stats) {
-      this.stats.end()
     }
   }
 
