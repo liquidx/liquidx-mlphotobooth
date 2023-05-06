@@ -1,6 +1,6 @@
 {
 	"name": "liquidx-mlphotobooth",
-	"version": "2.2.20230506",
+	"version": "2.3.20230506",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run package",
