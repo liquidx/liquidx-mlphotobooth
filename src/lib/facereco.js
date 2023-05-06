@@ -1,8 +1,10 @@
 // @ts-nocheck
-import * as faceLandmarksDetection from "@tensorflow-models/face-landmarks-detection";
-import * as uvcoords from "@tensorflow-models/face-landmarks-detection/dist/mediapipe-facemesh/uv_coords";
+import { createDetector, SupportedModels } from '@tensorflow-models/face-landmarks-detection';
 import * as tf from "@tensorflow/tfjs";
-import "@tensorflow/tfjs-backend-webgl";
+import '@mediapipe/face_mesh';
+import '@tensorflow/tfjs-core';
+// Register WebGL backend.
+import '@tensorflow/tfjs-backend-webgl';
 
 export class FaceReco {
   constructor(videoCameraElement, previewCanvasElement) {
@@ -15,17 +17,17 @@ export class FaceReco {
     this.videoLoaded = false;
     this.running = false;
     this.model = null;
-    faceLandmarksDetection
-      .load(faceLandmarksDetection.SupportedPackages.mediapipeFacemesh, {
-        maxFaces: this.maxFaces,
-      })
+    const model = SupportedModels.MediaPipeFaceMesh
+    const config = {
+      runtime: 'mediapipe',
+      solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh',
+      maxFaces: this.maxFaces,
+    }
+
+    createDetector(model, config)
       .then((model) => {
         this.model = model;
       });
-  }
-
-  getUVCoords() {
-    return uvcoords.UV_COORDS;
   }
 
   async setup() {
@@ -95,6 +97,10 @@ export class FaceReco {
   }
 
   async startVideo(deviceId) {
+    if (!deviceId) {
+      console.error('Device ID is not defined')
+      return;
+    }
     return this.setupCamera(
       this.videoCameraElement,
       this.videoSize,
@@ -116,7 +122,7 @@ export class FaceReco {
     const model = this.model;
 
     if (model && this.videoLoaded) {
-      const predictions = await model.estimateFaces({ input: video });
+      const predictions = await model.estimateFaces(video, { flipHorizontal: false });
 
       let mixAmount = 1.0;
 
@@ -143,10 +149,10 @@ export class FaceReco {
         ctx.fillStyle = "#dddddd";
 
         predictions.forEach((prediction) => {
-          const keypoints = prediction.scaledMesh;
+          const keypoints = prediction.keypoints;
           for (let i = 0; i < keypoints.length; i++) {
-            const x = keypoints[i][0] * videoCanvasScale;
-            const y = keypoints[i][1] * videoCanvasScale;
+            const x = keypoints[i].x * videoCanvasScale;
+            const y = keypoints[i].y * videoCanvasScale;
 
             ctx.beginPath();
             ctx.arc(x, y, 1 /* radius */, 0, 1 * Math.PI);

@@ -6,10 +6,6 @@ let _currentVideoDevice: string = '';
 
 let _faceViewer: null | FaceView = null
 let _faceReco: null | FaceReco = null
-let _options = {
-  debug: false,
-  showPreview: false
-}
 
 let _sourcesElement: null | HTMLSelectElement = null;
 let _loaderElement: null | HTMLDivElement = null;
@@ -51,6 +47,12 @@ const populateSourceSelector = (sources: HTMLSelectElement | null) => {
     navigator.mediaDevices.enumerateDevices().then((devices) => {
       devices.forEach((device) => {
         if (device.kind == "videoinput") {
+          // Set the current video device to the first one we find.
+          if (!_currentVideoDevice) {
+            _currentVideoDevice = device.deviceId;
+          }
+
+          // Add options for all the other devices.
           const optionElement = document.createElement("option");
           optionElement.setAttribute("value", device.deviceId);
           if (_currentVideoDevice == device.deviceId) {
@@ -68,6 +70,7 @@ const restartRecognition = (faceReco: null | FaceReco, faceViewer: null | FaceVi
   if (faceReco && faceViewer) {
     faceReco.start((predictions: any) => {
       setLoading(false)
+      //console.log(predictions);
       if (faceViewer) {
         faceViewer.updateFaceWithPredictions(predictions)
       }
@@ -98,8 +101,7 @@ export const onStartRecognition = () => {
   setLoading(true)
   if (_faceReco && _faceViewer) {
     _faceReco.setup()
-    faceViewerInit()
-    _faceViewer.computeMeshIndex(_faceReco.getUVCoords())
+    faceViewerInit(_sceneElement)
     _faceReco.startVideo(_currentVideoDevice).then(() => {
       restartRecognition(_faceReco, _faceViewer)
 
@@ -112,7 +114,7 @@ export const onSelectDevice = (e: Event) => {
     _currentVideoDevice = _sourcesElement.value
     // Changing video device is a little convulted because we need to stop
     // the recognition and restart it.
-    console.log('select device', sources.value)
+    console.log('select device', _currentVideoDevice)
     if (_faceReco && _faceReco.running) {
       _faceReco.stop()
       _faceReco.startVideo(_currentVideoDevice).then(() => {
@@ -134,9 +136,9 @@ export const initPhotoBooth = (elements: {
   _sceneElement = elements.sceneElement
   if (elements.videoElement && elements.previewElement) {
     const faceViewer = faceViewerInit(_sceneElement)
-    const faceReco = faceRecoInit(elements.videoElement, elements.previewElement)
+    faceRecoInit(elements.videoElement, elements.previewElement)
     populateSourceSelector(_sourcesElement)
-    faceViewer.computeMeshIndex(faceReco.getUVCoords())
-    faceViewer.updateFaceWithPredictions([faceAlastair])
+    faceViewer.computeMeshIndex(faceAlastair)
+    faceViewer.updateFaceWithPredictions(faceAlastair)
   }
 }

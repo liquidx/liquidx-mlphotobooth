@@ -1,8 +1,12 @@
 // @ts-nocheck
 import * as THREE from 'three'
-import { meanBy, last, flatten } from 'lodash-es'
+import { meanBy, flatten } from 'lodash-es'
 import Delaunator from 'delaunator'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+
+// https://github.com/tensorflow/tfjs-models/blob/master/face-landmarks-detection/demos/shared/params.js
+// The number of keypoints predicted by the model.
+export const NUM_KEYPOINTS = 468;
 
 export class FaceView {
   constructor(scene, width, height, datgui, stats) {
@@ -146,7 +150,11 @@ export class FaceView {
     }
   }
 
-  computeMeshIndex(uvCoords) {
+  computeMeshIndex(sampleFaces) {
+    let uvCoords = sampleFaces[0].keypoints.map(point => {
+      return [point.x, point.y]
+    })
+    console.log(uvCoords);
     // Compute triangular surface.
     let indexDelaunay = Delaunator.from(uvCoords)
     let meshIndex = []; // delaunay index => three.js index
@@ -177,23 +185,30 @@ export class FaceView {
   }
 
   centerAlignTranslationMatrix(vertices) {
-    const centerX = meanBy(vertices, 0)
-    const centerY = meanBy(vertices, 1)
-    const centerZ = meanBy(vertices, 2)
+    const centerX = meanBy(vertices, 'x')
+    const centerY = meanBy(vertices, 'y')
+    const centerZ = meanBy(vertices, 'z')
     return new THREE.Matrix4().makeTranslation(-centerX, -centerY, -centerZ)
   }
 
-  computeFaceNormal(face, translationMatrix) {
+  computeFaceNormal(points, translationMatrix) {
     // Pick three points that we use to determine the plane the face is "facing".
-    const leftEyeCorner = last(face.annotations.leftEyeLower0)
-    const rightEyeCorner = last(face.annotations.rightEyeLower0)
-    const lowerMouthCenter = face.annotations.lipsLowerOuter[4]
+    const leftEyes = points.filter(p => p.name && p.name == 'leftEye')
+    const rightEyes = points.filter(p => p.name && p.name == 'rightEye')
+    const lips = points.filter(p => p.name && p.name == 'lips')
+    if (leftEyes.length == 0 || rightEyes.length == 0 || lips.length == 0) {
+      return null
+    }
+
+    const leftEyeCorner = leftEyes[0]
+    const rightEyeCorner = rightEyes[0]
+    const lowerMouthCenter = lips[0]
 
     // order matters (thumb-rule)
     let triangleVerts = [
-      new THREE.Vector3(...rightEyeCorner),
-      new THREE.Vector3(...leftEyeCorner),
-      new THREE.Vector3(...lowerMouthCenter)
+      new THREE.Vector3(rightEyeCorner.x, rightEyeCorner.y, rightEyeCorner.z),
+      new THREE.Vector3(leftEyeCorner.x, leftEyeCorner.y, leftEyeCorner.z),
+      new THREE.Vector3(lowerMouthCenter.x, lowerMouthCenter.y, lowerMouthCenter.z)
     ]
 
     triangleVerts = triangleVerts.map(v => {
@@ -201,6 +216,7 @@ export class FaceView {
         .applyMatrix4(translationMatrix)
         .applyMatrix4(this.negateMatrix())
     })
+
 
     const faceTriangle = new THREE.Triangle(...triangleVerts)
     let faceNormal = new THREE.Vector3()
@@ -214,7 +230,7 @@ export class FaceView {
 
   transformFace(vertices, transforms) {
     let vectors = vertices.map(v => {
-      let vec = new THREE.Vector3(v[0], v[1], v[2])
+      let vec = new THREE.Vector3(v.x, v.y, v.z)
       transforms.forEach(transform => { vec = vec.applyMatrix4(transform) })
       return vec
     })
@@ -222,16 +238,30 @@ export class FaceView {
   }
 
   buildFaceMeshWithPrediction(predictions, material) {
-    let face = predictions[0]
+    if (!predictions || predictions.length == 0) {
+      return;
+    }
 
-    const translationMatrix = this.centerAlignTranslationMatrix(face.scaledMesh)
+    let face = predictions[0]
+    //console.log('Face', face);
+    if (face.keypoints && face.keypoints.length < NUM_KEYPOINTS) {
+      return;
+    }
+
+    let points = face.keypoints;
+
+    const translationMatrix = this.centerAlignTranslationMatrix(points)
     const negateMatrix = this.negateMatrix()  // I don't understand why the face is returned upside down and inverted.
 
     // Attempt to normalize the face height.
     // from https://github.com/tensorflow/tfjs-models/blob/master/facemesh/mesh_map.jpg
-    const topPoint = new THREE.Vector3(...face.scaledMesh[151])
-    const bottomPoint = new THREE.Vector3(...face.scaledMesh[199])
+    const topPointPosition = 151
+    const topPoint = new THREE.Vector3(points[topPointPosition].x, points[topPointPosition].y, points[topPointPosition].z)
+
+    const bottomPointPosition = 199
+    const bottomPoint = new THREE.Vector3(points[bottomPointPosition].x, points[bottomPointPosition].y, points[bottomPointPosition].z)
     const faceHeight = topPoint.distanceTo(bottomPoint)
+
     let scaleFactor = this.targetFaceHeight / faceHeight
     if (!this.applyScaling) {
       scaleFactor = 1
@@ -239,13 +269,21 @@ export class FaceView {
     const scaleMatrix = new THREE.Matrix4().makeScale(scaleFactor, scaleFactor, scaleFactor)
 
     // Attempt to always point face at (0, 0, 1)
-    const faceNormal = this.computeFaceNormal(face, translationMatrix)
+    const faceNormal = this.computeFaceNormal(points, translationMatrix)
+    if (!faceNormal) {
+      console.error('Unable to calculate normal')
+      return
+    }
+
     const rotationQuat = new THREE.Quaternion().setFromUnitVectors(faceNormal.normal, new THREE.Vector3(0, 0, 1))
     const rotationMatrix = new THREE.Matrix4().makeRotationFromQuaternion(rotationQuat)
 
-    const vertices = this.transformFace(face.scaledMesh, [translationMatrix, scaleMatrix, negateMatrix, rotationMatrix])
+    const vertices = this.transformFace(points, [translationMatrix, scaleMatrix, negateMatrix, rotationMatrix])
     const geometry = new THREE.BufferGeometry().setFromPoints(vertices)
-    geometry.setIndex(this.meshIndex); // order vertices based on delauney triangles computed in computeMeshIndex
+    // TODO: Temporarily disabled
+    if (this.meshIndex && this.meshIndex.length > 0) {
+      geometry.setIndex(this.meshIndex); // order vertices based on delauney triangles computed in computeMeshIndex
+    }
 
     let normalsArray = flatten(vertices.map(v => [0, 0, -1]))
     let colorsArray = flatten(vertices.map((v, i) => [i / vertices.length, 0.5, 0.5]))
