@@ -47,16 +47,22 @@ const setLoading = (isLoading: boolean) => {
 }
 
 const populateSourceSelector = (sources: HTMLSelectElement | null) => {
-  if (sources) {
-    navigator.mediaDevices.enumerateDevices().then((devices) => {
-      devices.forEach((device) => {
-        if (device.kind == "videoinput") {
-          // Set the current video device to the first one we find.
-          if (!_currentVideoDevice) {
-            _currentVideoDevice = device.deviceId;
-          }
+  return navigator.mediaDevices.enumerateDevices().then((devices) => {
+    console.log('populateSourceSelector', devices)
+    if (sources) {
+      while (sources.firstChild) {
+        sources.removeChild(sources.firstChild)
+      }
+    }
+    devices.forEach((device) => {
+      if (device.kind == "videoinput") {
+        // Set the current video device to the first one we find.
+        if (!_currentVideoDevice) {
+          _currentVideoDevice = device.deviceId;
+        }
 
-          // Add options for all the other devices.
+        // Add options for all the other devices.
+        if (sources) {
           const optionElement = document.createElement("option");
           optionElement.setAttribute("value", device.deviceId);
           if (_currentVideoDevice == device.deviceId) {
@@ -65,9 +71,9 @@ const populateSourceSelector = (sources: HTMLSelectElement | null) => {
           optionElement.innerText = device.label;
           sources.appendChild(optionElement);
         }
-      });
+      }
     });
-  }
+  });
 }
 
 let firstPredictions: any = null;
@@ -106,12 +112,14 @@ export const onStopRecognition = () => {
   }
 }
 
-export const onStartRecognition = () => {
+export const onStartRecognition = async () => {
   setLoading(true)
   if (_faceReco && _faceViewer) {
     _faceReco.setup()
-    faceViewerInit(_sceneElement)
-    _faceReco.startVideo(_currentVideoDevice).then(() => {
+    faceViewerInit(_sceneElement, _faceViewerOptions)
+    _faceReco.startVideo(_currentVideoDevice).then((deviceId) => {
+      _currentVideoDevice = deviceId
+      populateSourceSelector(_sourcesElement)
       restartRecognition(_faceReco, _faceViewer)
 
     })

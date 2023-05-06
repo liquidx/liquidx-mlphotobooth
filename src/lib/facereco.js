@@ -97,10 +97,6 @@ export class FaceReco {
   }
 
   async startVideo(deviceId) {
-    if (!deviceId) {
-      console.error('Device ID is not defined')
-      return;
-    }
     return this.setupCamera(
       this.videoCameraElement,
       this.videoSize,
