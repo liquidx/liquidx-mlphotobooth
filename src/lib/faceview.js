@@ -1,10 +1,11 @@
+// @ts-nocheck
 import * as THREE from 'three'
-import _ from 'lodash'
+import { meanBy, last, flatten } from 'lodash-es'
 import Delaunator from 'delaunator'
-import {OrbitControls} from 'threeExamples/controls/OrbitControls'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 
 export class FaceView {
-  constructor (scene, width, height, datgui, stats) {
+  constructor(scene, width, height, datgui, stats) {
     this.cameraX = -150
     this.cameraY = -15
     this.cameraZ = 270
@@ -29,27 +30,29 @@ export class FaceView {
     this.debugElement = document.querySelector('#debugConsole')
 
     this.scene = new THREE.Scene();
-    this.scene.add( new THREE.HemisphereLight() );
-  
-    this.renderer = new THREE.WebGLRenderer({ 
+    this.scene.add(new THREE.HemisphereLight());
+
+    this.renderer = new THREE.WebGLRenderer({
       canvas: scene,
-      antialias: true 
+      antialias: true
     });
-    this.renderer.setPixelRatio( window.devicePixelRatio );
-    this.renderer.setSize( this.width, this.height );
+    this.renderer.setPixelRatio(window.devicePixelRatio);
+    this.renderer.setSize(this.width, this.height);
 
-    this.wireMaterial = new THREE.MeshLambertMaterial({ 
-      side: THREE.DoubleSide, 
-      vertexColors: true, 
-      wireframe: true, 
-      wireframeLinewidth: 6 })
+    this.wireMaterial = new THREE.MeshLambertMaterial({
+      side: THREE.DoubleSide,
+      vertexColors: true,
+      wireframe: true,
+      wireframeLinewidth: 6
+    })
 
-    this.meshMaterial = new THREE.MeshNormalMaterial({ 
-      side: THREE.DoubleSide, 
-      vertexColors: true, 
+    this.meshMaterial = new THREE.MeshNormalMaterial({
+      side: THREE.DoubleSide,
+      vertexColors: true,
       flatShading: true,
-      wireframe: false, 
-      wireframeLinewidth: 6 })
+      wireframe: false,
+      wireframeLinewidth: 6
+    })
 
     if (datgui) {
       datgui.add(this, 'wireframe').onFinishChange(this.updateScene.bind(this))
@@ -68,17 +71,17 @@ export class FaceView {
     }
 
     this.stats = stats
-  
+
     this.updateAxes()
-  
-    this.camera = new THREE.PerspectiveCamera( 75, this.width / this.height, 0.1, 1000 );
-    this.camera.add(new THREE.PointLight( 0xffffff, 1 ));
-  
-    let controls = new OrbitControls( this.camera, this.renderer.domElement );
+
+    this.camera = new THREE.PerspectiveCamera(75, this.width / this.height, 0.1, 1000);
+    this.camera.add(new THREE.PointLight(0xffffff, 1));
+
+    let controls = new OrbitControls(this.camera, this.renderer.domElement);
     controls.minDistance = 50;
     controls.maxDistance = 600;
     controls.enablePan = true;
-    controls.addEventListener( 'change', this.cameraDidMove.bind(this) );
+    controls.addEventListener('change', this.cameraDidMove.bind(this));
     controls.update();
 
     // Position should be set after OrbitControls is applied, otherwise it overwrites everything.
@@ -98,7 +101,7 @@ export class FaceView {
   showDebug(message) {
     if (this.debugElement) {
       this.debugElement.innerHTML = message
-    }    
+    }
   }
 
   cameraDebug() {
@@ -114,14 +117,14 @@ export class FaceView {
     }
   }
 
-  cameraControlsDidUpdate () {
+  cameraControlsDidUpdate() {
     this.camera.position.x = this.cameraX
     this.camera.position.y = this.cameraY
-    this.camera.position.z = this.cameraZ    
+    this.camera.position.z = this.cameraZ
 
     this.camera.rotation.x = this.cameraAngleX
     this.camera.rotation.y = this.cameraAngleY
-    this.camera.rotation.z = this.cameraAngleZ    
+    this.camera.rotation.z = this.cameraAngleZ
   }
 
   cameraDidMove() {
@@ -147,7 +150,7 @@ export class FaceView {
     // Compute triangular surface.
     let indexDelaunay = Delaunator.from(uvCoords)
     let meshIndex = []; // delaunay index => three.js index
-    for (let i = 0; i < indexDelaunay.triangles.length; i++){
+    for (let i = 0; i < indexDelaunay.triangles.length; i++) {
       meshIndex.push(indexDelaunay.triangles[i]);
     }
     this.meshIndex = meshIndex
@@ -174,16 +177,16 @@ export class FaceView {
   }
 
   centerAlignTranslationMatrix(vertices) {
-    const centerX = _.meanBy(vertices, 0)
-    const centerY = _.meanBy(vertices, 1)
-    const centerZ = _.meanBy(vertices, 2)
+    const centerX = meanBy(vertices, 0)
+    const centerY = meanBy(vertices, 1)
+    const centerZ = meanBy(vertices, 2)
     return new THREE.Matrix4().makeTranslation(-centerX, -centerY, -centerZ)
   }
 
   computeFaceNormal(face, translationMatrix) {
     // Pick three points that we use to determine the plane the face is "facing".
-    const leftEyeCorner = _.last(face.annotations.leftEyeLower0)
-    const rightEyeCorner = _.last(face.annotations.rightEyeLower0)
+    const leftEyeCorner = last(face.annotations.leftEyeLower0)
+    const rightEyeCorner = last(face.annotations.rightEyeLower0)
     const lowerMouthCenter = face.annotations.lipsLowerOuter[4]
 
     // order matters (thumb-rule)
@@ -193,7 +196,8 @@ export class FaceView {
       new THREE.Vector3(...lowerMouthCenter)
     ]
 
-    triangleVerts = triangleVerts.map(v => { return v
+    triangleVerts = triangleVerts.map(v => {
+      return v
         .applyMatrix4(translationMatrix)
         .applyMatrix4(this.negateMatrix())
     })
@@ -209,15 +213,15 @@ export class FaceView {
   }
 
   transformFace(vertices, transforms) {
-    let vectors = vertices.map(v => { 
+    let vectors = vertices.map(v => {
       let vec = new THREE.Vector3(v[0], v[1], v[2])
-      transforms.forEach(transform => { vec = vec.applyMatrix4(transform)})
+      transforms.forEach(transform => { vec = vec.applyMatrix4(transform) })
       return vec
     })
     return vectors
   }
 
-  buildFaceMeshWithPrediction(predictions, material) {  
+  buildFaceMeshWithPrediction(predictions, material) {
     let face = predictions[0]
 
     const translationMatrix = this.centerAlignTranslationMatrix(face.scaledMesh)
@@ -243,15 +247,15 @@ export class FaceView {
     const geometry = new THREE.BufferGeometry().setFromPoints(vertices)
     geometry.setIndex(this.meshIndex); // order vertices based on delauney triangles computed in computeMeshIndex
 
-    let normalsArray = _.flatten(vertices.map(v => [0, 0, -1]))
-    let colorsArray = _.flatten(vertices.map((v, i) => [i/vertices.length, 0.5, 0.5]))
+    let normalsArray = flatten(vertices.map(v => [0, 0, -1]))
+    let colorsArray = flatten(vertices.map((v, i) => [i / vertices.length, 0.5, 0.5]))
     geometry.setAttribute('normal', new THREE.Float32BufferAttribute(normalsArray, 3))
     geometry.setAttribute('color', new THREE.Float32BufferAttribute(colorsArray, 3))
-  
+
     const faceMesh = new THREE.Group()
     const mesh = new THREE.Mesh(geometry, material)
     faceMesh.add(mesh)
-  
+
     if (this.showPoints || this.wireframe) {
       const cloud = new THREE.Points(
         geometry,
