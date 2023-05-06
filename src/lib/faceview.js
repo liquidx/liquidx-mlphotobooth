@@ -1,8 +1,8 @@
 // @ts-nocheck
 import * as THREE from 'three'
 import { meanBy, flatten } from 'lodash-es'
-import Delaunator from 'delaunator'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
+import { FACEMESH_TESSELATION } from '@mediapipe/face_mesh';
 
 // https://github.com/tensorflow/tfjs-models/blob/master/face-landmarks-detection/demos/shared/params.js
 // The number of keypoints predicted by the model.
@@ -29,6 +29,8 @@ export class FaceView {
     this.showPoints = false
     this.showAxes = false
     this.showNormal = false
+
+    this.meshIndex = this.computeMeshIndexFromFaceMesh()
 
     this.cachedPredictions = null
     this.debugElement = document.querySelector('#debugConsole')
@@ -150,18 +152,17 @@ export class FaceView {
     }
   }
 
-  computeMeshIndex(sampleFaces) {
-    let uvCoords = sampleFaces[0].keypoints.map(point => {
-      return [point.x, point.y]
-    })
-    console.log(uvCoords);
-    // Compute triangular surface.
-    let indexDelaunay = Delaunator.from(uvCoords)
-    let meshIndex = []; // delaunay index => three.js index
-    for (let i = 0; i < indexDelaunay.triangles.length; i++) {
-      meshIndex.push(indexDelaunay.triangles[i]);
-    }
-    this.meshIndex = meshIndex
+  computeMeshIndexFromFaceMesh() {
+    // Each of the FACEMESH_TESSELATION format is the edge of the triangle
+    // defined by which position in the facemesh that is returned. 
+    // [1, 2] means the edge is using the second and third position in the returned array.
+    //
+    // THREE.BufferGeometry.index takes only the position of the
+    // triangle, so the first element of each FACEMESH_TESSELATION is used
+    // to build the geometry index.
+
+    let triangles = FACEMESH_TESSELATION.map(v => v[0])
+    return triangles
   }
 
   updateScene() {
@@ -280,7 +281,7 @@ export class FaceView {
 
     const vertices = this.transformFace(points, [translationMatrix, scaleMatrix, negateMatrix, rotationMatrix])
     const geometry = new THREE.BufferGeometry().setFromPoints(vertices)
-    // TODO: Temporarily disabled
+
     if (this.meshIndex && this.meshIndex.length > 0) {
       geometry.setIndex(this.meshIndex); // order vertices based on delauney triangles computed in computeMeshIndex
     }

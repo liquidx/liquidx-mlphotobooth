@@ -1,5 +1,5 @@
 import { FaceReco } from './facereco.js'
-import { face as faceAlastair } from './face_at.js'
+import { faces as facesAlastair } from './face_at.js'
 import { FaceView } from './faceview.js'
 
 let _currentVideoDevice: string = '';
@@ -66,11 +66,16 @@ const populateSourceSelector = (sources: HTMLSelectElement | null) => {
   }
 }
 
+let firstPredictions: any = null;
+
 const restartRecognition = (faceReco: null | FaceReco, faceViewer: null | FaceView) => {
   if (faceReco && faceViewer) {
     faceReco.start((predictions: any) => {
       setLoading(false)
-      //console.log(predictions);
+      if (!firstPredictions) {
+        firstPredictions = predictions;
+        console.log(firstPredictions)
+      }
       if (faceViewer) {
         faceViewer.updateFaceWithPredictions(predictions)
       }
@@ -138,7 +143,8 @@ export const initPhotoBooth = (elements: {
     const faceViewer = faceViewerInit(_sceneElement)
     faceRecoInit(elements.videoElement, elements.previewElement)
     populateSourceSelector(_sourcesElement)
-    faceViewer.computeMeshIndex(faceAlastair)
-    faceViewer.updateFaceWithPredictions(faceAlastair)
+    if (facesAlastair && facesAlastair.length > 0) {
+      faceViewer.updateFaceWithPredictions(facesAlastair)
+    }
   }
 }
