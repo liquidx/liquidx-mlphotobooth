@@ -19,7 +19,7 @@
 		"!dist/**/*.spec.*"
 	],
 	"peerDependencies": {
-		"svelte": "^3.54.0"
+		"svelte": "^4.0.0"
 	},
 	"dependencies": {
 		"@google-cloud/storage": "^7.3.0",
