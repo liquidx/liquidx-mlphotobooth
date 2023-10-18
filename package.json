@@ -1,6 +1,6 @@
 {
 	"name": "liquidx-mlphotobooth",
-	"version": "2.5.20231015",
+	"version": "2.5.20231018",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "vite build && npm run package",
@@ -13,10 +13,11 @@
 			"svelte": "./dist/index.js"
 		}
 	},
+	"svelte": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"sideEffects": false,
 	"files": [
-		"dist",
-		"!dist/**/*.test.*",
-		"!dist/**/*.spec.*"
+		"dist"
 	],
 	"peerDependencies": {
 		"svelte": "^4.0.0"
