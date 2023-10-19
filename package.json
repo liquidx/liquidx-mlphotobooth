@@ -13,9 +13,6 @@
 			"svelte": "./dist/index.js"
 		}
 	},
-	"svelte": "./dist/index.js",
-	"types": "./dist/index.d.ts",
-	"sideEffects": false,
 	"files": [
 		"dist"
 	],
